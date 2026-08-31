@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tree of Love</title>
+
+<!-- Two deliberate type families: a serif for the letter/headline voice, a soft rounded sans for UI moments -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* =============================================================
+   TREE OF LOVE — stylesheet
+   Palette: a dusk-to-first-light gradient (deep plum → rose →
+   peach), with heart leaves in warm pink and a cream letter
+   card. Serif (Cormorant Garamond) carries the love letter and
+   headline voice; a rounded sans (Quicksand) carries the one
+   UI moment (the opening button).
+   ============================================================= */
+
+:root {
+  /* --- color tokens: deep ocean palette --- */
+  --ocean-surface:  #1c4258;
+  --ocean-mid:      #123049;
+  --ocean-deep:     #04121d;
+  --teal-glow:      #2fb6ad;
+  --cyan-glow:      #7fdbda;
+  --heart-coral:    #f2a89c;
+  --heart-lavender: #d9b3e6;
+  --heart-cyan:     #a9dbe0;
+  --heart-carnation: #f6a3c3;
+  --heart-rosy:      #c33d78;
+  /* Tree-of-Love canopy palette: the tree's own hearts are blue,
+     not pink — kept separate from the coral/carnation tones above,
+     which still belong to the "For You" button glyph. */
+  --heart-blue-deep:   #1e4f8f;
+  --heart-blue-mid:    #3a86d1;
+  --heart-blue-cyan:   #3fd0c9;
+  --heart-blue-aqua:   #7fe6dc;
+  --heart-blue-light:  #bdeff2;
+  --letter-cream:   #fbf3e6;
+  --letter-cream-2: #f3e6d2;
+  --ink:            #4a3626;
+  --ink-soft:       #8a7360;
+  --gold-accent:    #c9a068;
+
+  /* --- type --- */
+  --font-display: 'Cormorant Garamond', 'Georgia', serif;
+  --font-ui: 'Quicksand', 'Segoe UI', sans-serif;
+
+  /* --- layout targets for the tree/letter split, overridden per breakpoint below --- */
+  --tree-x: 50%;
+  --tree-y: 50%;
+  --tree-scale: 1;
+  --letter-x: 20%;
+  --letter-y: 50%;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background: var(--ocean-deep);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+button { font-family: inherit; }
+
+/* =============================================================
+   SHARED BACKDROP
+   Both the welcome screen and the main scene sit on the same
+   slow-drifting deep-ocean gradient — lighter blue near the
+   surface, fading to near-black navy at depth — so the opening
+   never feels like a separate "page".
+   ============================================================= */
+
+.welcome-screen,
+.scene {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background:
+    radial-gradient(ellipse at 30% 12%, rgba(127, 219, 218, 0.16), transparent 55%),
+    radial-gradient(ellipse at 75% 70%, rgba(47, 182, 173, 0.14), transparent 60%),
+    linear-gradient(180deg, var(--ocean-surface) 0%, var(--ocean-mid) 45%, var(--ocean-deep) 100%);
+  background-size: 140% 140%;
+  animation: driftBackground 26s ease-in-out infinite alternate;
+  overflow: hidden;
+}
+
+@keyframes driftBackground {
+  0%   { background-position: 0% 0%, 100% 100%, 0% 0%; }
+  100% { background-position: 20% 10%, 80% 90%, 15% 8%; }
+}
+
+/* =============================================================
+   UNDERWATER LIGHT RAYS
+   A handful of soft, blurred light beams drifting from above,
+   shared by the welcome screen and the main scene.
+   ============================================================= */
+
+.light-rays {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.light-rays span {
+  position: absolute;
+  top: -15%;
+  width: 90px;
+  height: 150%;
+  background: linear-gradient(180deg, rgba(210, 245, 245, 0.16) 0%, rgba(210, 245, 245, 0.05) 45%, transparent 80%);
+  filter: blur(5px);
+  transform-origin: top center;
+  animation: rayDrift 9s ease-in-out infinite;
+}
+
+.light-rays span:nth-child(1) { left: 6%;  width: 70px;  transform: rotate(9deg);  animation-delay: 0s; }
+.light-rays span:nth-child(2) { left: 22%; width: 110px; transform: rotate(4deg);  animation-delay: -3s; opacity: 0.8; }
+.light-rays span:nth-child(3) { left: 48%; width: 80px;  transform: rotate(-6deg); animation-delay: -6s; }
+.light-rays span:nth-child(4) { left: 68%; width: 130px; transform: rotate(-3deg); animation-delay: -1.5s; opacity: 0.7; }
+.light-rays span:nth-child(5) { left: 86%; width: 60px;  transform: rotate(7deg);  animation-delay: -4.5s; }
+
+@keyframes rayDrift {
+  0%, 100% { opacity: 0.45; transform: rotate(var(--rot, 5deg)) translateX(0); }
+  50%      { opacity: 0.8;  transform: rotate(calc(var(--rot, 5deg) - 3deg)) translateX(8px); }
+}
+
+/* =============================================================
+   WELCOME SCREEN
+   ============================================================= */
+
+.welcome-screen {
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4rem;
+  transition: opacity 1.1s ease, visibility 1.1s ease;
+}
+
+.welcome-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.welcome-glow {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(63, 190, 190, 0.20) 0%, transparent 70%);
+  animation: pulseGlow 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50%      { transform: scale(1.12); opacity: 1; }
+}
+
+.welcome-eyebrow {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  color: var(--letter-cream);
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+.open-btn {
+  position: relative;
+  border: 1px solid rgba(253, 246, 238, 0.55);
+  background: rgba(253, 246, 238, 0.08);
+  color: var(--letter-cream);
+  padding: 0.95em 2.3em;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: transform 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 0 0 rgba(79, 214, 224, 0);
+}
+
+.open-btn:hover,
+.open-btn:focus-visible {
+  background: rgba(253, 246, 238, 0.16);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 30px rgba(79, 214, 224, 0.35);
+}
+
+.open-btn:focus-visible {
+  outline: 2px solid var(--letter-cream);
+  outline-offset: 3px;
+}
+
+.heart-glyph {
+  display: inline-block;
+  color: var(--heart-coral);
+  margin-left: 0.3em;
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25%      { transform: scale(1.18); }
+  40%      { transform: scale(1); }
+}
+
+/* =============================================================
+   MAIN SCENE
+   ============================================================= */
+
+.scene {
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.scene.active {
+  opacity: 1;
+}
+
+/* Rising bubbles, generated in JS as plain divs. Named ".particle"
+   in the markup/JS for continuity, styled here as small glassy
+   underwater bubbles rather than glowing motes. */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  bottom: -5vh;
+  width: var(--size, 4px);
+  height: var(--size, 4px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.85), rgba(180,230,235,0.16) 60%, rgba(255,255,255,0) 78%);
+  border: 1px solid rgba(220, 245, 245, 0.22);
+  opacity: 0;
+  animation: floatUp var(--duration, 18s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes floatUp {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  10%  { opacity: 0.65; }
+  70%  { opacity: 0.5; }
+  92%  { opacity: 0.15; }
+  100% { transform: translate(var(--drift, 40px), -110vh); opacity: 0; }
+}
+
+/* =============================================================
+   FISH
+   Simple, elegant silhouettes that cross the scene continuously.
+   Each fish is a horizontally-swimming wrapper (.fish) around an
+   inner element that bobs up and down independently, so the
+   motion reads as swimming rather than sliding.
+   ============================================================= */
+
+.fish-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fish {
+  position: absolute;
+  top: var(--fish-top, 40%);
+  left: 0;
+  width: var(--fish-size, 30px);
+  color: var(--fish-color, rgba(190, 225, 225, 0.5));
+  opacity: var(--fish-opacity, 0.75);
+  animation: swimRight var(--fish-duration, 24s) linear var(--fish-delay, 0s) infinite;
+}
+
+.fish.swim-left {
+  animation-name: swimLeft;
+}
+
+.fish-body {
+  display: block;
+  animation: fishBob 2.6s ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0s);
+  transform-origin: center;
+}
+
+.fish-body svg { display: block; width: 100%; height: auto; }
+
+@keyframes swimRight {
+  from { transform: translateX(-16vw); }
+  to   { transform: translateX(116vw); }
+}
+
+@keyframes swimLeft {
+  from { transform: translateX(116vw) scaleX(-1); }
+  to   { transform: translateX(-16vw) scaleX(-1); }
+}
+
+@keyframes fishBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-5px) rotate(-3deg); }
+}
+
+/* =============================================================
+   WHALES
+   One or two large, slow, faint silhouettes far in the background.
+   Same left/right facing convention as fish: the base artwork
+   faces right, and .swim-left mirrors it — see script.js.
+   ============================================================= */
+
+.whale-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.whale {
+  position: absolute;
+  top: var(--whale-top, 18%);
+  left: 0;
+  width: var(--whale-size, 130px);
+  color: var(--whale-color, rgba(60, 110, 150, 0.3));
+  opacity: var(--whale-opacity, 0.28);
+  animation: swimRight var(--whale-duration, 70s) linear var(--whale-delay, 0s) infinite;
+}
+
+.whale.swim-left {
+  animation-name: swimLeft;
+}
+
+.whale-body {
+  display: block;
+  animation: whaleBob 8s ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0s);
+  transform-origin: center;
+}
+
+.whale-body svg { display: block; width: 100%; height: auto; }
+
+@keyframes whaleBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* =============================================================
+   STARFISH
+   A handful of small, mostly-static shapes near the ocean floor
+   and around the tree's base — deliberately not continuously
+   animated (per the performance pass, most stay still).
+   ============================================================= */
+
+.starfish-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.starfish {
+  position: absolute;
+  bottom: var(--starfish-bottom, 2%);
+  left: 0;
+  width: var(--starfish-size, 22px);
+  color: var(--starfish-color, rgba(232, 190, 130, 0.55));
+  opacity: var(--starfish-opacity, 0.55);
+  transform: rotate(var(--starfish-rot, 0deg));
+}
+
+.starfish svg { display: block; width: 100%; height: auto; }
+
+.starfish.twinkle {
+  animation: starfishTwinkle var(--twinkle-duration, 6s) ease-in-out var(--twinkle-delay, 0s) infinite;
+}
+
+@keyframes starfishTwinkle {
+  0%, 100% { opacity: var(--starfish-opacity, 0.55); }
+  50%      { opacity: calc(var(--starfish-opacity, 0.55) * 0.55); }
+}
+
+/* =============================================================
+   TREE STAGE
+   Positioned with left/top percentages (rather than flex) so a
+   single transition can carry it from dead-center to its final
+   resting place, on any screen size.
+   ============================================================= */
+
+.tree-stage {
+  position: absolute;
+  top: var(--tree-y);
+  left: var(--tree-x);
+  transform: translate(-50%, -50%) scale(var(--tree-scale));
+  width: min(70vw, 480px);
+  z-index: 4;
+  transition: left 2.6s cubic-bezier(0.65, 0, 0.35, 1),
+              top 2.6s cubic-bezier(0.65, 0, 0.35, 1),
+              transform 2.6s cubic-bezier(0.65, 0, 0.35, 1);
+  filter: drop-shadow(0 20px 45px rgba(2, 10, 18, 0.55));
+}
+
+.tree-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Only hinted to the compositor while the one-time "move to final
+   position" transition is actually running (class toggled by JS),
+   not permanently — will-change left on forever just wastes GPU
+   memory on a layer that's static 99% of the time. */
+.tree-stage.moving,
+.letter-stage.moving {
+  will-change: transform, top, left;
+}
+
+.tree-ground-glow {
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+.tree-stage.grown .tree-ground-glow { opacity: 1; }
+
+/* A soft, blush-pink underwater glow sitting behind the heart
+   canopy, so the carnation heart reads as gently lit from within
+   rather than flat against the deep-ocean background. Fades in
+   as the canopy fills, then breathes very slowly. */
+.tree-heart-glow {
+  opacity: 0;
+  transition: opacity 2.6s ease 0.6s;
+}
+.tree-stage.grown .tree-heart-glow {
+  opacity: 1;
+  animation: canopyGlowPulse 6s ease-in-out infinite;
+}
+
+@keyframes canopyGlowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.05); opacity: 1; }
+}
+
+/* Branch paths: drawn progressively via stroke-dashoffset, set inline by JS */
+.branch-path {
+  fill: none;
+  stroke: url(#barkGradient);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Heart leaves — fill color is assigned per-leaf by script.js
+   from a small underwater palette (coral / lavender / cyan); the
+   var() here is just a fallback if that ever isn't set. */
+/* No per-leaf filter/drop-shadow here on purpose: with 250-300
+   leaves on screen, an individual filter on each one is one of
+   the most expensive things a browser can be asked to do (every
+   leaf becomes its own offscreen raster + blur pass, recomputed
+   whenever its sway animation ticks). The "glow" for the canopy
+   comes from the single shared <ellipse class="tree-heart-glow">
+   behind the leaves instead — one soft light source, not hundreds. */
+.heart-leaf {
+  fill: var(--heart-blue-mid);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 1.1s ease;
+}
+
+.heart-leaf.shown {
+  opacity: 0.95;
+}
+
+/* Only a portion of leaves get the continuous sway animation (see
+   the SWAY_FRACTION note in script.js) — enough for the canopy to
+   read as gently alive, without every one of the (several hundred)
+   leaves running its own infinite animation forever. */
+.heart-leaf.shown.sway {
+  animation: leafSway var(--sway-duration, 4s) ease-in-out var(--sway-delay, 0s) infinite;
+}
+
+/* Sway is transform-only (rotate/translateY/scale) so it stays on
+   the compositor. It used to also animate fill-opacity for a subtle
+   shimmer, but fill-opacity is a paint property — animating it on
+   hundreds of SVG elements forced a full repaint of the canopy on
+   every frame and was the single biggest cause of the FPS drop.
+   The shimmer now comes from the single shared #leaf-layer opacity
+   pulse below instead (one cheap, compositable animation instead of
+   hundreds of paint-triggering ones). */
+@keyframes leafSway {
+  0%, 100% { transform: rotate(var(--base-rot, 0deg)) translateY(0) scale(1); }
+  50%      { transform: rotate(calc(var(--base-rot, 0deg) + 6deg)) translateY(-2px) scale(1.07); }
+}
+
+/* One shared shimmer for the *entire* canopy, applied once to the
+   leaf-layer group rather than to each of the several hundred
+   individual leaves — a single compositable opacity pass instead of
+   hundreds of per-leaf paints.
+   NOTE: this group intentionally has no CSS `filter` (e.g. a glow
+   drop-shadow). A filter on a container whose children are
+   continuously transforming forces the browser to re-rasterize the
+   whole filtered region every single frame, since the filter can't
+   be cached while its input keeps changing — with hundreds of
+   swaying leaves underneath, that's extremely expensive. The
+   canopy's glow comes entirely from the static <ellipse
+   class="tree-heart-glow"> behind it instead, which only pulses a
+   plain opacity/scale (also compositable, and unaffected by what
+   the leaves are doing). */
+#leaf-layer {
+  animation: canopyShimmer 5.5s ease-in-out infinite;
+}
+
+@keyframes canopyShimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.93; }
+}
+
+/* =============================================================
+   DRIFTING HEART LEAVES
+   Each drifting heart is a small absolutely-positioned element
+   injected into #falling-hearts by script.js. The motion zigzags
+   gently side to side on the way down, like something floating
+   through water rather than falling through air.
+   ============================================================= */
+
+.falling-hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.falling-heart {
+  position: absolute;
+  top: -5vh;
+  color: var(--heart-blue-cyan, #3fd0c9);
+  opacity: 0;
+  animation: heartFall var(--fall-duration, 16s) ease-in-out var(--fall-delay, 0s) forwards;
+}
+
+.falling-heart svg { display: block; width: 100%; height: 100%; }
+
+@keyframes heartFall {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  8%   { opacity: 0.85; }
+  25%  { transform: translate(calc(var(--drift-x, 30px) * 0.4), 24vh) rotate(calc(var(--rot-mid, 90deg) * 0.35)); }
+  50%  { transform: translate(calc(var(--drift-x, 30px) * -0.35), 50vh) rotate(var(--rot-mid, 90deg)); }
+  75%  { transform: translate(calc(var(--drift-x, 30px) * 0.7), 76vh) rotate(calc((var(--rot-mid, 90deg) + var(--rot-end, 200deg)) * 0.5)); }
+  92%  { opacity: 0.75; }
+  100% { transform: translate(var(--drift-x, 30px), 100vh) rotate(var(--rot-end, 200deg)); opacity: 0; }
+}
+
+/* =============================================================
+   LETTER STAGE
+   ============================================================= */
+
+.letter-stage {
+  position: absolute;
+  top: var(--letter-y);
+  left: var(--letter-x);
+  transform: translate(-50%, -50%) translateY(18px);
+  width: min(86vw, 380px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 1.6s ease, transform 1.6s ease, top 2.6s cubic-bezier(0.65,0,0.35,1), left 2.6s cubic-bezier(0.65,0,0.35,1);
+}
+
+.letter-stage.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(0);
+  pointer-events: auto;
+}
+
+/* A large, translucent heart glowing softly behind the letter,
+   as if lit from within the water — it never resizes with the
+   letter's content, only the letter-card box scrolls. */
+.big-heart {
+  position: absolute;
+  width: 145%;
+  max-width: 520px;
+  z-index: 1;
+  fill: var(--cyan-glow);
+  opacity: 0.16;
+  filter: drop-shadow(0 0 26px rgba(85, 208, 216, 0.35));
+  animation: heartPulse 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); opacity: 0.14; }
+  50%      { transform: scale(1.045); opacity: 0.24; }
+}
+
+.letter-card {
+  /* Fixed, compact footprint: this box never grows with the
+     letter's length. Only the text inside it scrolls. */
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 360px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, var(--letter-cream) 0%, var(--letter-cream-2) 100%);
+  border-radius: 14px;
+  padding: 2rem 1.9rem 1.8rem;
+  box-shadow:
+    0 25px 60px rgba(2, 14, 24, 0.55),
+    0 0 40px rgba(80, 200, 220, 0.22),
+    0 0 0 1px rgba(255,255,255,0.4) inset;
+}
+
+.letter-heading {
+  flex: 0 0 auto;
+  margin: 0 0 0.7rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--gold-accent);
+  text-align: left;
+}
+
+/* Scrollable body: the heading stays put, and everything below
+   it — the letter text and the typing cursor — scrolls together
+   inside this fixed-height area. The scrollbar is hidden but the
+   scrolling itself still works (mouse wheel, trackpad, touch). */
+.letter-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.4rem;
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge / IE */
+}
+
+.letter-body::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari, new Edge */
+}
+
+.letter-text {
+  margin: 0;
+  display: inline;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.letter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  background: var(--ink-soft);
+  vertical-align: text-bottom;
+  animation: blinkCursor 0.9s step-end infinite;
+}
+
+.letter-cursor.done {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+@keyframes blinkCursor {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* =============================================================
+   RESPONSIVE LAYOUT
+   Desktop: tree right, letter left (final position set by JS
+   adding .grown / .visible, using these breakpoint variables).
+   Mobile: tree settles near the top, letter sits underneath.
+   ============================================================= */
+
+.scene {
+  --tree-x-final: 72%;
+  --tree-y-final: 48%;
+  --tree-scale-final: 0.82;
+  --letter-x-final: 21%;
+  --letter-y-final: 50%;
+}
+
+/* Added once the tree has finished growing: reassigns the shared
+   position variables so .tree-stage and .letter-stage animate
+   (via their own transitions) into the final composition. */
+.scene.tree-final {
+  --tree-x: var(--tree-x-final);
+  --tree-y: var(--tree-y-final);
+  --tree-scale: var(--tree-scale-final);
+  --letter-x: var(--letter-x-final);
+  --letter-y: var(--letter-y-final);
+}
+
+@media (max-width: 860px) {
+  .scene {
+    --tree-x-final: 50%;
+    --tree-y-final: 26%;
+    --tree-scale-final: 0.62;
+    --letter-x-final: 50%;
+    --letter-y-final: 74%;
+  }
+  .tree-stage { width: min(85vw, 380px); }
+  .letter-stage { width: min(90vw, 360px); }
+  .letter-card {
+    height: 300px;
+    max-height: 46vh;
+    padding: 1.6rem 1.4rem 1.4rem;
+  }
+  .letter-heading { font-size: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+
+/* =============================================================
+   "CLICK HERE!" REVEAL BUTTON
+   Hidden until the love-letter typing animation finishes.
+   Sits fixed at the bottom-center of the screen, above the
+   whole scene, and fades/rises in when revealed.
+   ============================================================= */
+.reveal-btn {
+  position: fixed;
+  left: 50%;
+  bottom: 6vh;
+  transform: translate(-50%, 18px);
+  z-index: 40;
+  border: 1px solid rgba(253, 246, 238, 0.55);
+  background: rgba(253, 246, 238, 0.08);
+  color: var(--letter-cream);
+  padding: 0.85em 2.1em;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 0 rgba(79, 214, 224, 0);
+  transition: opacity 1.1s ease, transform 1.1s ease, background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.reveal-btn.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.reveal-btn:hover,
+.reveal-btn:focus-visible {
+  background: rgba(253, 246, 238, 0.16);
+  box-shadow: 0 8px 30px rgba(79, 214, 224, 0.35);
+}
+
+.reveal-btn .heart-glyph { margin-left: 0.35em; }
+
+/* Cinematic fade-away for the tree + letter once "Click Here!"
+   is pressed. Declared after their base/.visible rules so it
+   takes precedence at equal specificity. */
+.tree-stage.fading-out {
+  transition: opacity 1.8s ease, transform 1.8s ease !important;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(calc(var(--tree-scale) * 0.92)) translateY(-30px);
+}
+
+.letter-stage.fading-out {
+  transition: opacity 1.8s ease, transform 1.8s ease !important;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) translateY(-30px) scale(0.95);
+}
+
+/* =============================================================
+   PHOTO GALLERY + MUSIC SECTION
+   A second full-screen "page" that fades in once the tree and
+   letter have finished fading away. Lives on the same deep-ocean
+   backdrop so it never feels like a separate site.
+   ============================================================= */
+.gallery-section {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 20;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(ellipse at 30% 12%, rgba(127, 219, 218, 0.14), transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(47, 182, 173, 0.12), transparent 60%),
+    linear-gradient(180deg, var(--ocean-surface) 0%, var(--ocean-mid) 45%, var(--ocean-deep) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.6s ease;
+  display: none;
+  padding: clamp(24px, 6vh, 64px) clamp(16px, 5vw, 56px) 64px;
+}
+
+.gallery-section.visible {
+  display: block;
+  pointer-events: auto;
+}
+
+/* A separate class toggled a frame after .visible/display switch,
+   so the opacity transition actually runs. */
+.gallery-section.revealed {
+  opacity: 1;
+}
+
+.gallery-heading {
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--letter-cream);
+  font-size: clamp(1.4rem, 3.4vw, 2.1rem);
+  letter-spacing: 0.02em;
+  margin: 0 0 clamp(24px, 4vh, 40px);
+  opacity: 0.92;
+}
+
+/* ------------------------------------------------------------
+   Grid: max 5 columns x 5 rows. The music player sits explicitly
+   in the visual center cell (column 3 / row 3 on desktop); photo
+   items auto-place into the remaining cells in document order,
+   naturally skipping the occupied center cell. Removing an
+   <img class="gallery-item"> from the HTML simply leaves the
+   grid one cell shorter -- no empty placeholders are forced.
+   ------------------------------------------------------------ */
+.gallery-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: 1fr;
+  gap: clamp(10px, 1.6vw, 20px);
+}
+
+.gallery-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(2, 10, 18, 0.5), 0 0 0 1px rgba(253, 246, 238, 0.08),
+              0 0 26px rgba(79, 214, 224, 0.12);
+  background: rgba(253, 246, 238, 0.05);
+  opacity: 0;
+  transform: translateY(26px) scale(0.9);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+.gallery-section.revealed .gallery-grid .gallery-item,
+.gallery-section.revealed .gallery-grid .music-player {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Music player: explicitly centered on the 5x5 grid on desktop. */
+.music-player {
+  grid-column: 3;
+  grid-row: 3;
+  border-radius: 16px;
+  border: 1px solid rgba(253, 246, 238, 0.22);
+  background: rgba(253, 246, 238, 0.07);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 28px rgba(2, 10, 18, 0.5), 0 0 26px rgba(79, 214, 224, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(26px) scale(0.9);
+  transition: opacity 1s ease, transform 1s ease;
+  transition-delay: var(--reveal-delay, 0.4s);
+}
+
+.music-player .heart-glyph {
+  font-size: 0.85rem;
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+.music-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--letter-cream);
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.music-play-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(253, 246, 238, 0.55);
+  background: rgba(253, 246, 238, 0.1);
+  color: var(--letter-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease;
+  padding: 0;
+}
+
+.music-play-btn:hover { background: rgba(253, 246, 238, 0.2); transform: scale(1.06); }
+
+.music-play-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+.music-progress-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(253, 246, 238, 0.18);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.music-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--heart-blue-cyan), var(--heart-carnation));
+  transition: width 0.15s linear;
+}
+
+@media (max-width: 700px) {
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+  /* Explicit centering only makes sense on the 5-col desktop
+     layout; on narrower grids let the player fall in naturally
+     wherever it sits in the HTML (roughly the middle photo). */
+  .music-player { grid-column: auto; grid-row: auto; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- ============================================
+       WELCOME SCREEN
+       Shown first. Nothing animates until the
+       visitor chooses to open it themselves.
+  ============================================= -->
+  <section id="welcome-screen" class="welcome-screen">
+    <div class="light-rays" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div id="welcome-fish" class="fish-layer" aria-hidden="true"></div>
+    <div class="welcome-glow" aria-hidden="true"></div>
+    <div id="welcome-particles" class="particles" aria-hidden="true"></div>
+    <p class="welcome-eyebrow">I hope you like it em :> </p>
+    <button id="open-btn" class="open-btn" type="button">
+      For You <span class="heart-glyph">❤</span>
+    </button>
+  </section>
+
+  <!-- ============================================
+       MAIN SCENE
+       Holds the background, the growing tree,
+       the falling hearts, and the love letter.
+  ============================================= -->
+  <main id="scene" class="scene" aria-hidden="true">
+
+    <!-- Underwater light rays, drifting from above -->
+    <div class="light-rays" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+
+    <!-- Ambient rising bubbles -->
+    <div id="particles" class="particles" aria-hidden="true"></div>
+
+    <!-- Whales drift slowly, far in the background -->
+    <div id="whale-layer" class="whale-layer" aria-hidden="true"></div>
+
+    <!-- Starfish rest near the ocean floor / tree base -->
+    <div id="starfish-layer" class="starfish-layer" aria-hidden="true"></div>
+
+    <!-- Fish swim continuously behind the tree and letter -->
+    <div id="fish-layer" class="fish-layer" aria-hidden="true"></div>
+
+    <!-- Drifting heart leaves are injected here by script.js -->
+    <div id="falling-hearts" class="falling-hearts" aria-hidden="true"></div>
+
+    <!-- The tree itself: an SVG we draw progressively with JS -->
+    <div id="tree-stage" class="tree-stage">
+      <svg id="tree-svg" class="tree-svg" viewBox="0 0 420 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="treeGlow" cx="50%" cy="65%" r="60%">
+            <stop offset="0%" stop-color="#3ad6c9" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#3ad6c9" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="heartCanopyGlow" cx="50%" cy="50%" r="55%">
+            <stop offset="0%" stop-color="#4fd6dd" stop-opacity="0.5"/>
+            <stop offset="55%" stop-color="#3a86d1" stop-opacity="0.26"/>
+            <stop offset="100%" stop-color="#3a86d1" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="barkGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4f6b5a"/>
+            <stop offset="100%" stop-color="#22302a"/>
+          </linearGradient>
+          <!-- A darker, blue-leaning bark tone for the branches that
+               live *inside* the canopy (heart-outline + secondary
+               limbs), so any sliver that peeks between the dense
+               heart leaves reads as a shadow within the foliage
+               rather than bare brown wood. The trunk below the
+               canopy keeps the warmer barkGradient above. -->
+          <linearGradient id="canopyBarkGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2c4a52"/>
+            <stop offset="100%" stop-color="#16262c"/>
+          </linearGradient>
+        </defs>
+
+        <ellipse class="tree-ground-glow" cx="210" cy="470" rx="140" ry="18" fill="url(#treeGlow)"/>
+
+        <!-- Soft underwater glow behind the whole heart canopy -->
+        <ellipse class="tree-heart-glow" cx="210" cy="150" rx="215" ry="190" fill="url(#heartCanopyGlow)"/>
+
+        <!-- Trunk and branch paths are added dynamically by script.js -->
+        <g id="branch-layer"></g>
+
+        <!-- Heart leaves are added dynamically by script.js -->
+        <g id="leaf-layer"></g>
+      </svg>
+    </div>
+
+    <!-- The love letter panel -->
+    <div id="letter-stage" class="letter-stage">
+      <svg class="big-heart" viewBox="0 0 200 180" aria-hidden="true">
+        <path d="M100,170 C40,120 5,85 5,50 C5,20 28,2 55,2 C75,2 92,14 100,32 C108,14 125,2 145,2 C172,2 195,20 195,50 C195,85 160,120 100,170 Z"/>
+      </svg>
+
+      <article class="letter-card">
+        <p class="letter-heading"><B>My dearest em</B></p>
+        <!--
+          ============================================
+          TO EDIT YOUR LOVE LETTER:
+          Just replace the text below, right inside
+          the <p id="letter-text"> element. Plain text
+          only. Line breaks you type here will show up
+          in the letter too — the script handles the
+          typing animation automatically. The card's
+          size never changes — long letters simply
+          scroll inside the box below.
+          ============================================
+        -->
+        <div id="letter-body" class="letter-body">
+        <p id="letter-text" class="letter-text">
+
+First of all, thank you for giving me the chance to see you today and to talk to you. Thank you for bringing light into my life and for making me realize what I truly want to pursue. I finally discovered a passion that I genuinely enjoy, and that is creating things like this. Every time I make something, I feel like I’m slowly discovering more about myself and what I want to become in the future. And more than anything, I want you to be a part of that future.
+
+I didn’t play games yesterday. I just focused on making this because I wanted to put my time and feelings into something meaningful. I’m planning to stop completely or, at the very least, limit myself to only a short amount of time so I don’t keep wasting the hours I could be using for something good, like a babitime!. I want to become someone who is prepared for life instead of someone who spends all their time escaping from reality.
+
+I really appreciate you, Bub, because even after everything that happened, I know that you still care about me. You made me realize so many things about myself that I was too blind to see before. I’m willing to change the things I know I’ve been doing wrong. I don’t want my life to stay the same, where most of my time disappears into games. I want to focus more on reality because we both know how difficult it can be to find a job and build a future when I’m not doing anything to prepare myself for it.
+
+And while I’m working on my passion and building something for my future, I want you to be a part of it too. You’re always somewhere in the things I want to create, just like this one. Every little thing I make reminds me of you because you became one of the reasons I started wanting to become better.
+
+I know I made mistakes. I know there were so many ways I could have given you the reassurance and love you needed, but I failed to do that when you needed it most. I’m truly sorry. The August that was supposed to be a beautiful month for us became filled with sadness because you stopped seeing the person I used to be. And for that, I’m deeply sorry.
+
+I hope that as September begins, we can also begin something better between us. I don’t expect everything to suddenly become perfect because I know that trust and happiness take time to rebuild. But I want you to know that I’m willing to put in that time. I want to show you through my actions, not just through words, that I can change and that I can become someone you can be proud of.
+
+I know I’ve hurt you, and sometimes I hate myself for realizing it only after the damage has already been done. I regret so many things every single day, especially knowing I was the one who started the chain of events that brought us here. If I could go back and change those moments, I would. But if I can’t, then all I can do now is learn from them, grow, and become better.
+
+I love you so much, Em. More than I was able to properly show you before. I want to appreciate you, value you, and cherish every moment we’ve shared. I want you to know that you mattered to me—not only because you were someone I loved, but because you inspired me to look at myself differently and made me want to become a better person.
+
+Whatever happens, I will always be grateful that I met you. Thank you for the memories, the conversations, the laughter, the moments of comfort, and even the lessons that came from our hardest days. You became such an important part of my life, and I will never regret loving you.
+
+I’m sorry for the times I made you feel unimportant. I’m sorry for the moments when my actions made you question how much you meant to me. You deserved reassurance, effort, and consistency, and I know there were times when I failed to give you those things.
+
+I don’t want to make promises that are only beautiful when written down. I want my actions to speak for me from now on. I want to grow, improve myself, and become the person I know I’m capable of becoming.
+
+And Bub, I’m not writing this to say goodbye. I’m writing this because I want you to know how much I love you, how sorry I am, and how much I still hope we can make things better. If there is still even a small part of you that wants to give us another chance, I promise I will treasure it and do my best to make that chance worth it.
+
+But if your heart has already made its decision, I will respect it, even if it hurts. I don’t want to force you to stay. I just want you to know that if you choose to stay, I’m willing to work for us, to rebuild what I broke, and to show you that the changes I’m talking about are real.
+
+I know words alone cannot fix everything, and I don’t expect this letter to erase the pain I caused. I just hope that, somehow, you can see how much I’ve reflected on everything and how much I genuinely want to do better—not only for us, but for myself too.
+
+Thank you for being one of the most beautiful parts of my life.
+
+I love you so much, Bub. And I’m truly, deeply sorry.
+
+
+<b>With all my heart,
+Kel</b>
+
+
+</p><span id="letter-cursor" class="letter-cursor"></span>
+        </div>
+      </article>
+    </div>
+
+  </main>
+
+  <!-- ============================================
+       "CLICK HERE!" BUTTON
+       Hidden until the love letter finishes typing.
+       Shown by JS (search for "showRevealButton").
+  ============================================= -->
+  <button id="reveal-btn" class="reveal-btn" type="button">
+    Click Here! <span class="heart-glyph">❤</span>
+  </button>
+
+  <!-- ============================================
+       PHOTO GALLERY + MUSIC SECTION
+       Revealed after the love letter and tree fade
+       away. Lives on its own full-screen "page".
+
+       ---------------------------------------------
+       TO ADD YOUR OWN PHOTOS:
+       Each photo is one <img class="gallery-item">
+       line below. There are 24 ready-made slots,
+       numbered IMAGE 1 through IMAGE 24 -- just
+       replace the src="..." path on each with your
+       own image file (e.g. "images/photo-1.jpg").
+       If you have fewer than 24 photos, simply
+       DELETE the extra <img> lines entirely -- do
+       not leave them blank, or empty boxes will
+       show. The grid uses at most 5 columns and
+       5 rows and will reflow naturally either way.
+       ---------------------------------------------
+  ============================================= -->
+  <section id="gallery-section" class="gallery-section" aria-hidden="true">
+    <h2 class="gallery-heading">Our Little Gallery <span class="heart-glyph">❤</span></h2>
+
+    <div class="gallery-grid" id="gallery-grid">
+
+      <!-- IMAGE 1 -->
+      <img class="gallery-item" src="em1.jpg" alt="Memory 1" loading="lazy">
+      <!-- IMAGE 2 -->
+      <img class="gallery-item" src="em2.jpg" alt="Memory 2" loading="lazy">
+      <!-- IMAGE 3 -->
+      <img class="gallery-item" src="em3.jpg" alt="Memory 3" loading="lazy">
+      <!-- IMAGE 4 -->
+      <img class="gallery-item" src="em4.jpg" alt="Memory 4" loading="lazy">
+      <!-- IMAGE 5 -->
+      <img class="gallery-item" src="em5.jpg" alt="Memory 5" loading="lazy">
+      <!-- IMAGE 6 -->
+      <img class="gallery-item" src="em6.jpg" alt="Memory 6" loading="lazy">
+      <!-- IMAGE 7 -->
+      <img class="gallery-item" src="em7.jpg" alt="Memory 7" loading="lazy">
+      <!-- IMAGE 8 -->
+      <img class="gallery-item" src="em8.jpg" alt="Memory 8" loading="lazy">
+      <!-- IMAGE 9 -->
+      <img class="gallery-item" src="em9.jpg" alt="Memory 9" loading="lazy">
+      <!-- IMAGE 10 -->
+      <img class="gallery-item" src="em10.jpg" alt="Memory 10" loading="lazy">
+      <!-- IMAGE 11 -->
+      <img class="gallery-item" src="em11.jpg" alt="Memory 11" loading="lazy">
+      <!-- IMAGE 12 -->
+      <img class="gallery-item" src="em12.jpg" alt="Memory 12" loading="lazy">
+
+      <!-- ---------------------------------------------
+           MUSIC PLAYER
+           Sits in the center cell of the 5x5 grid.
+           To change the song, edit SONG TITLE and
+           AUDIO FILE inside the <script> below --
+           look for "MUSIC PLAYER SETTINGS".
+           --------------------------------------------- -->
+      <div class="music-player" id="music-player">
+        <span class="heart-glyph">♫</span>
+        <p class="music-title" id="music-title">I love you so much more</p>
+        <button class="music-play-btn" id="music-play-btn" type="button" aria-label="Play song">
+          <svg id="music-play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="music-pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+        <div class="music-progress-track" id="music-progress-track">
+          <div class="music-progress-fill" id="music-progress-fill"></div>
+        </div>
+        <!-- AUDIO FILE: change the src below, or edit
+             AUDIO FILE in the script settings. -->
+        <audio id="music-audio" src="apology.mp3" preload="metadata"></audio>
+      </div>
+
+      <!-- IMAGE 13 -->
+      <img class="gallery-item" src="em13.jpg" alt="Memory 13" loading="lazy">
+      <!-- IMAGE 14 -->
+      <img class="gallery-item" src="em14.jpg" alt="Memory 14" loading="lazy">
+      <!-- IMAGE 15 -->
+      <img class="gallery-item" src="em15.jpg" alt="Memory 15" loading="lazy">
+      <!-- IMAGE 16 -->
+      <img class="gallery-item" src="em16.jpg" alt="Memory 16" loading="lazy">
+      <!-- IMAGE 17 -->
+      <img class="gallery-item" src="em17.jpg" alt="Memory 17" loading="lazy">
+      <!-- IMAGE 18 -->
+      <img class="gallery-item" src="em25.jpg" alt="Memory 18" loading="lazy">
+      <!-- IMAGE 19 -->
+      <img class="gallery-item" src="em19.jpg" alt="Memory 19" loading="lazy">
+      <!-- IMAGE 20 -->
+      <img class="gallery-item" src="em20.jpg" alt="Memory 20" loading="lazy">
+      <!-- IMAGE 21 -->
+      <img class="gallery-item" src="em21.jpg" alt="Memory 21" loading="lazy">
+      <!-- IMAGE 22 -->
+      <img class="gallery-item" src="em22.jpg" alt="Memory 22" loading="lazy">
+      <!-- IMAGE 23 -->
+      <img class="gallery-item" src="em23.jpg" alt="Memory 23" loading="lazy">
+      <!-- IMAGE 24 -->
+      <img class="gallery-item" src="em24.jpg" alt="Memory 24" loading="lazy">
+
+    </div>
+  </section>
+
+  <script>
+/* =============================================================
+   TREE OF LOVE — script.js
+   Everything here runs in this order:
+   welcome screen -> "For You" click -> sapling -> trunk grows ->
+   branches extend -> heart leaves appear -> short pause ->
+   tree moves right -> love letter appears on the left ->
+   typing animation -> falling hearts continue.
+
+   All timing lives in the TIMING object below — change a number
+   there to change the pace of the whole story.
+   ============================================================= */
+
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------
+  // 0. DEVICE PERFORMANCE TIER
+  //    A light-touch heuristic (no benchmarking, just device
+  //    hints) used to scale down element counts on weaker
+  //    devices, so the scene stays smooth everywhere. The main
+  //    Tree of Love and love letter always render in full —
+  //    only the *density* of ambient hearts/particles/fish
+  //    changes.
+  // ---------------------------------------------------------
+  const PERF_SCALE = (function () {
+    try {
+      const narrow = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+      const lowMem = 'deviceMemory' in navigator && navigator.deviceMemory <= 4;
+      const lowCores = 'hardwareConcurrency' in navigator && navigator.hardwareConcurrency <= 4;
+      if (lowMem && narrow) return 0.65;
+      if (lowMem || (narrow && lowCores)) return 0.8;
+      return 1;
+    } catch (e) {
+      return 1;
+    }
+  })();
+
+  // ---------------------------------------------------------
+  // 0. MUSIC PLAYER SETTINGS — change these two lines to swap
+  //    the song. SONG_TITLE is the text shown in the player.
+  //    AUDIO_FILE is the path to your audio file (mp3, etc.),
+  //    relative to this HTML file (or a full URL).
+  // ---------------------------------------------------------
+  const SONG_TITLE = "I love you so much more";
+  const AUDIO_FILE  = "apology.mp3";
+
+  // ---------------------------------------------------------
+  // 1. TIMING CONSTANTS — the only numbers you should need to
+  //    touch to change the pacing of the animation.
+  // ---------------------------------------------------------
+  const TIMING = {
+    TRUNK_GROW_MS: 1900,           // how long the trunk takes to draw upward
+    HEART_OUTLINE_GROW_MS: 2600,   // how long the two main limbs take to trace the heart outline
+    SECONDARY_BRANCH_GROW_MS: 900, // how long each secondary filler branch takes to draw
+    SECONDARY_BRANCH_STAGGER_MS: 150, // delay between one secondary branch starting and the next
+    LOOSE_LEAF_SPREAD_MS: 2600,    // how long the free-floating canopy leaves take to bloom in, outer edge last
+    LEAF_FADE_MS: 850,             // how long a single heart leaf takes to fade in
+    LEAF_STAGGER_MS: 90,           // delay between neighbouring leaves on the same branch
+    PAUSE_AFTER_GROWN_MS: 1500,    // pause once the tree is fully grown, before it moves
+    TREE_MOVE_MS: 2600,            // must match the CSS transition duration on .tree-stage
+    LETTER_DELAY_AFTER_MOVE_MS: 700,  // wait after the tree starts moving before the letter appears
+    TYPING_START_DELAY_MS: 550,    // wait after the letter card appears before typing starts
+    TYPING_SPEED_MIN_MS: 40,       // fastest gap between two typed characters
+    TYPING_SPEED_MAX_MS: 80,      // slowest gap between two typed characters
+    FALLING_HEART_INTERVAL_MS: 1700,  // how often a new drifting heart is spawned
+    FALLING_HEART_MAX_ON_SCREEN: 7,   // caps how many drift at once, so it stays gentle
+    FALLING_HEART_MIN_DURATION_S: 15, // slow, peaceful underwater drift
+    FALLING_HEART_MAX_DURATION_S: 23,
+    FISH_MAIN_COUNT: Math.max(6, Math.round(9 * PERF_SCALE)),   // fish swimming through the main scene
+    FISH_WELCOME_COUNT: Math.max(3, Math.round(4 * PERF_SCALE)), // faint, distant fish on the opening screen
+    WHALE_COUNT: 2,                // 1-2 distant whales, per spec
+    STARFISH_COUNT: 6,             // small, mostly-static starfish near the floor / tree base
+    SEED_BUD_COUNT: 9,             // hearts that bud in right at the start, before branches exist
+    SCENE_FADE_OUT_MS: 1800,       // must match the .fading-out transition duration in CSS
+    GALLERY_ITEM_STAGGER_MS: 160,  // delay between each photo animating into the gallery
+  };
+
+  // ---------------------------------------------------------
+  // 2. ELEMENT REFERENCES
+  // ---------------------------------------------------------
+  const welcomeScreen = document.getElementById('welcome-screen');
+  const openBtn = document.getElementById('open-btn');
+  const scene = document.getElementById('scene');
+  const treeStage = document.getElementById('tree-stage');
+  const branchLayer = document.getElementById('branch-layer');
+  const leafLayer = document.getElementById('leaf-layer');
+  const fallingHeartsContainer = document.getElementById('falling-hearts');
+  const letterStage = document.getElementById('letter-stage');
+  const letterBodyEl = document.getElementById('letter-body');
+  const letterTextEl = document.getElementById('letter-text');
+  const letterCursorEl = document.getElementById('letter-cursor');
+  const revealBtn = document.getElementById('reveal-btn');
+  const gallerySection = document.getElementById('gallery-section');
+  const galleryGrid = document.getElementById('gallery-grid');
+  const musicPlayer = document.getElementById('music-player');
+  const musicAudio = document.getElementById('music-audio');
+  const musicTitleEl = document.getElementById('music-title');
+  const musicPlayBtn = document.getElementById('music-play-btn');
+  const musicPlayIcon = document.getElementById('music-play-icon');
+  const musicPauseIcon = document.getElementById('music-pause-icon');
+  const musicProgressTrack = document.getElementById('music-progress-track');
+  const musicProgressFill = document.getElementById('music-progress-fill');
+  const particleContainers = [
+    document.getElementById('welcome-particles'),
+    document.getElementById('particles'),
+  ];
+  const fishContainers = [
+    document.getElementById('welcome-fish'),
+    document.getElementById('fish-layer'),
+  ];
+  const whaleLayer = document.getElementById('whale-layer');
+  const starfishLayer = document.getElementById('starfish-layer');
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // A single reusable heart-shaped path, centered near the origin.
+  const HEART_D = 'M0,5 C-2,0 -10,-2 -10,6 C-10,14 -3,17 0,22 C3,17 10,14 10,6 C10,-2 2,0 0,5 Z';
+
+  // Blue-water palette for the canopy: dominated by a medium ocean
+  // blue with a deeper navy accent, plus cyan/aqua and a pale
+  // light-blue highlight, so the huge heart reads as glowing blue
+  // hearts rather than a flat single color. No pink or red.
+  const HEART_LEAF_PALETTE = [
+    { color: '#3a86d1', weight: 0.40 }, // medium ocean blue
+    { color: '#1e4f8f', weight: 0.20 }, // deep ocean blue
+    { color: '#3fd0c9', weight: 0.20 }, // cyan
+    { color: '#7fe6dc', weight: 0.13 }, // aqua
+    { color: '#bdeff2', weight: 0.07 }, // light blue highlight
+  ];
+  function randomLeafColor() {
+    const r = Math.random();
+    let acc = 0;
+    for (let i = 0; i < HEART_LEAF_PALETTE.length; i++) {
+      acc += HEART_LEAF_PALETTE[i].weight;
+      if (r <= acc) return HEART_LEAF_PALETTE[i].color;
+    }
+    return HEART_LEAF_PALETTE[0].color;
+  }
+
+  // ---------------------------------------------------------
+  // 3c. HEART GEOMETRY
+  //    The canopy silhouette is a real parametric heart curve
+  //    (not a placeholder image). Branches trace this curve to
+  //    form the outline; leaves are scattered inside it by
+  //    sampling rays outward from the curve's own bottom cusp,
+  //    which is where the trunk meets the canopy.
+  // ---------------------------------------------------------
+  const HEART_ORIGIN = { x: 210, y: 258 }; // trunk tip == bottom cusp of the heart
+  const HEART_SCALE = 9.4;
+
+  // Classic heart parametric curve. At t = PI this sits at the
+  // curve's own bottom point, which is what HEART_ORIGIN anchors.
+  function heartRaw(t) {
+    return {
+      x: 16 * Math.pow(Math.sin(t), 3),
+      y: 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t),
+    };
+  }
+  const HEART_Y0 = heartRaw(Math.PI).y;
+
+  // A point on the heart's outline (u = 1) or scaled inward
+  // toward the cusp (u < 1), with optional pixel jitter so
+  // branches feel hand-grown rather than mathematically exact.
+  function heartPoint(t, u, jitter) {
+    const raw = heartRaw(t);
+    let x = HEART_ORIGIN.x + HEART_SCALE * raw.x * u;
+    let y = HEART_ORIGIN.y - HEART_SCALE * (raw.y - HEART_Y0) * u;
+    if (jitter) {
+      x += (Math.random() - 0.5) * jitter;
+      y += (Math.random() - 0.5) * jitter;
+    }
+    return { x: x, y: y };
+  }
+
+  // A random point inside the heart, biased slightly toward the
+  // outer edge (denser bloom near the silhouette, still filled
+  // through the middle) so the canopy reads as a real heart shape
+  // rather than a uniform blob.
+  //
+  // NOTE: this radial (t, u) approach interpolates each interior
+  // point along a straight line from the bottom cusp out to the
+  // outline point at angle t. That's a fine approximation near the
+  // cusp itself, but for the wide, rounded lobe *tops* it badly
+  // under-samples: moderate-u points along a cusp-to-lobe-tip line
+  // mostly pass through the tree's central column rather than
+  // through the lobe's own body, leaving visible gaps just inside
+  // the rim of each lobe no matter how many points are added. It's
+  // kept here only for buildSecondaryBranches' branch *targets*
+  // (where hugging that radial fan is exactly the desired branch
+  // shape); actual leaf fill uses heartUniformPoint() below instead.
+  function heartFillPoint(uMin, uMax) {
+    const t = Math.random() * Math.PI * 2;
+    const u = uMin + Math.pow(Math.random(), 0.6) * (uMax - uMin);
+    return { pt: heartPoint(t, u, 0), t: t, u: u };
+  }
+
+  // A dense polygon approximation of the true heart outline, used
+  // for accurate interior point sampling (point-in-polygon test)
+  // rather than the cusp-radial approximation above.
+  const HEART_POLY = (function () {
+    const pts = [];
+    const steps = 160;
+    for (let i = 0; i <= steps; i++) {
+      pts.push(heartPoint((i / steps) * Math.PI * 2, 1, 0));
+    }
+    return pts;
+  })();
+  const HEART_BOUNDS = (function () {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    HEART_POLY.forEach((p) => {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    return { minX, maxX, minY, maxY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  })();
+
+  // A very slightly outward-expanded copy of the outline (points
+  // pushed ~9% farther from the centroid), used only as the leaf
+  // sampling boundary. Leaf *centers* are area-uniform samples, but
+  // each leaf glyph has its own radius, so centers confined strictly
+  // inside the true outline left a thin sliver of the branch stroke
+  // exposed right at the rim (particularly the top cleft, where the
+  // heart curve is tightest). Sampling against this slightly larger
+  // boundary lets leaves overhang the outline by a few px, the way
+  // a real dense canopy would, and fully covers the branch beneath.
+  const HEART_POLY_EXPANDED = HEART_POLY.map((p) => ({
+    x: HEART_BOUNDS.cx + (p.x - HEART_BOUNDS.cx) * 1.09,
+    y: HEART_BOUNDS.cy + (p.y - HEART_BOUNDS.cy) * 1.09,
+  }));
+  const HEART_BOUNDS_EXPANDED = (function () {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    HEART_POLY_EXPANDED.forEach((p) => {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    return { minX, maxX, minY, maxY };
+  })();
+
+  // Standard even-odd ray-casting point-in-polygon test.
+  function pointInPoly(poly, x, y) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y;
+      const xj = poly[j].x, yj = poly[j].y;
+      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+  function pointInHeart(x, y) { return pointInPoly(HEART_POLY, x, y); }
+
+  // A genuinely area-uniform random point inside the heart
+  // (rejection sampling against the real outline polygon, not the
+  // cusp-radial approximation), so density stays even across the
+  // whole canopy — rounded lobe tops included, no rim-hugging gaps.
+  // pullToCenter (0-1) optionally nudges the accepted point toward
+  // the heart's own centroid, for passes that want extra weight in
+  // the core rather than a flat-uniform spread.
+  function heartUniformPoint(pullToCenter) {
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const x = HEART_BOUNDS_EXPANDED.minX + Math.random() * (HEART_BOUNDS_EXPANDED.maxX - HEART_BOUNDS_EXPANDED.minX);
+      const y = HEART_BOUNDS_EXPANDED.minY + Math.random() * (HEART_BOUNDS_EXPANDED.maxY - HEART_BOUNDS_EXPANDED.minY);
+      if (pointInPoly(HEART_POLY_EXPANDED, x, y)) {
+        if (!pullToCenter) return { x: x, y: y };
+        return { x: x + (HEART_BOUNDS.cx - x) * pullToCenter, y: y + (HEART_BOUNDS.cy - y) * pullToCenter };
+      }
+    }
+    return { x: HEART_BOUNDS.cx, y: HEART_BOUNDS.cy };
+  }
+
+  // Builds a smooth SVG path 'd' string through a list of points
+  // using the midpoint-quadratic technique, so hand-sampled points
+  // read as one continuous, organic curve.
+  function smoothPathD(points) {
+    if (points.length < 2) return '';
+    let d = 'M' + points[0].x.toFixed(1) + ',' + points[0].y.toFixed(1);
+    for (let i = 1; i < points.length - 1; i++) {
+      const mx = (points[i].x + points[i + 1].x) / 2;
+      const my = (points[i].y + points[i + 1].y) / 2;
+      d += ' Q' + points[i].x.toFixed(1) + ',' + points[i].y.toFixed(1) + ' ' + mx.toFixed(1) + ',' + my.toFixed(1);
+    }
+    const last = points[points.length - 1];
+    d += ' L' + last.x.toFixed(1) + ',' + last.y.toFixed(1);
+    return d;
+  }
+
+  // Simple, elegant fish silhouette as a reusable inline SVG.
+  // Drawn facing RIGHT by default (eye/head on the high-x side,
+  // tail fin on the low-x side) — the .swim-left class mirrors it
+  // with scaleX(-1) for leftward-swimming fish, so a fish's head
+  // always points the way it's actually moving.
+  const FISH_SVG = '<svg viewBox="0 0 60 30" xmlns="' + SVG_NS + '">' +
+    '<path d="M58,15 C50,2 26,2 16,15 C26,28 50,28 58,15 Z" fill="currentColor"/>' +
+    '<path d="M16,15 L1,3 L10,15 L1,27 Z" fill="currentColor"/>' +
+    '<circle cx="47" cy="13" r="1.7" fill="rgba(6,20,30,0.55)"/>' +
+    '</svg>';
+  const FISH_COLORS = ['rgba(190,225,225,0.55)', 'rgba(150,205,215,0.5)', 'rgba(210,235,232,0.45)', 'rgba(170,215,220,0.55)'];
+
+  // Whale silhouette, same right-facing-by-default convention as
+  // the fish above (head/eye toward high x, tail fluke toward low
+  // x), kept intentionally simple and low-detail since it's meant
+  // to read as a faint, distant shape.
+  const WHALE_SVG = '<svg viewBox="0 0 150 60" xmlns="' + SVG_NS + '">' +
+    '<path d="M20,30 C20,12 55,4 85,4 C112,4 132,14 142,28 C136,32 128,34 122,30 C118,40 108,50 88,54 C60,58 30,52 20,38 Z" fill="currentColor"/>' +
+    '<path d="M20,30 L2,14 L10,30 L2,46 Z" fill="currentColor"/>' +
+    '<circle cx="112" cy="20" r="2.4" fill="rgba(6,20,30,0.4)"/>' +
+    '</svg>';
+  const WHALE_COLORS = ['rgba(70,120,165,0.32)', 'rgba(55,100,145,0.28)', 'rgba(90,150,180,0.3)'];
+
+  // Simple five-point starfish silhouette.
+  const STARFISH_SVG = '<svg viewBox="0 0 40 40" xmlns="' + SVG_NS + '">' +
+    '<path d="M20,1 L24,15 L38,15 L26,23 L31,38 L20,29 L9,38 L14,23 L2,15 L16,15 Z" fill="currentColor"/>' +
+    '</svg>';
+  const STARFISH_COLORS = ['rgba(232,190,130,0.55)', 'rgba(240,170,150,0.5)', 'rgba(210,200,150,0.5)'];
+
+  let fallingHeartCount = 0;
+  let fallingHeartTimer = null;
+
+  // ---------------------------------------------------------
+  // 3. AMBIENT PARTICLES
+  //    Small glowing motes drifting upward, purely decorative.
+  // ---------------------------------------------------------
+  function spawnParticles(container, count) {
+    if (!container) return;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 2 + Math.random() * 4;
+      const duration = 14 + Math.random() * 14;
+      const delay = Math.random() * duration;
+      const drift = (Math.random() - 0.5) * 80;
+      p.style.setProperty('--size', size.toFixed(1) + 'px');
+      p.style.setProperty('--duration', duration.toFixed(1) + 's');
+      p.style.setProperty('--delay', '-' + delay.toFixed(1) + 's');
+      p.style.setProperty('--drift', drift.toFixed(0) + 'px');
+      p.style.left = (Math.random() * 100).toFixed(1) + '%';
+      container.appendChild(p);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 3b. FISH
+  //    A handful of small silhouettes drifting across the scene
+  //    in both directions, each with its own size, height, speed,
+  //    and gentle up/down bob.
+  // ---------------------------------------------------------
+  function spawnFish(container, count, opts) {
+    if (!container) return;
+    opts = opts || {};
+    for (let i = 0; i < count; i++) {
+      const fish = document.createElement('div');
+      fish.className = 'fish';
+      const swimLeft = Math.random() < 0.5;
+      if (swimLeft) fish.classList.add('swim-left');
+
+      const size = (opts.minSize || 20) + Math.random() * ((opts.maxSize || 42) - (opts.minSize || 20));
+      const duration = (opts.minDuration || 18) + Math.random() * ((opts.maxDuration || 34) - (opts.minDuration || 18));
+      const delay = -Math.random() * duration; // negative delay staggers starting positions
+      const top = 6 + Math.random() * 78;
+      const color = FISH_COLORS[Math.floor(Math.random() * FISH_COLORS.length)];
+      const opacity = opts.opacity != null ? opts.opacity : 0.5 + Math.random() * 0.3;
+
+      fish.style.setProperty('--fish-size', size.toFixed(0) + 'px');
+      fish.style.setProperty('--fish-duration', duration.toFixed(1) + 's');
+      fish.style.setProperty('--fish-delay', delay.toFixed(1) + 's');
+      fish.style.setProperty('--fish-top', top.toFixed(1) + '%');
+      fish.style.setProperty('--fish-color', color);
+      fish.style.setProperty('--fish-opacity', opacity.toFixed(2));
+
+      const body = document.createElement('span');
+      body.className = 'fish-body';
+      body.style.setProperty('--bob-delay', (-Math.random() * 2.6).toFixed(2) + 's');
+      body.innerHTML = FISH_SVG;
+      fish.appendChild(body);
+
+      container.appendChild(fish);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 3c. WHALES
+  //    Only 1-2 at a time, far in the background: large, slow,
+  //    faint, simple CSS-transform movement only.
+  // ---------------------------------------------------------
+  function spawnWhales(container, count) {
+    if (!container) return;
+    for (let i = 0; i < count; i++) {
+      const whale = document.createElement('div');
+      whale.className = 'whale';
+      const swimLeft = Math.random() < 0.5;
+      if (swimLeft) whale.classList.add('swim-left');
+
+      const size = 110 + Math.random() * 70;
+      const duration = 60 + Math.random() * 35;
+      const delay = -Math.random() * duration;
+      // Keep whales up in the higher, more distant water column,
+      // spaced apart so two never overlap awkwardly.
+      const top = 10 + i * 22 + Math.random() * 10;
+      const color = WHALE_COLORS[Math.floor(Math.random() * WHALE_COLORS.length)];
+
+      whale.style.setProperty('--whale-size', size.toFixed(0) + 'px');
+      whale.style.setProperty('--whale-duration', duration.toFixed(1) + 's');
+      whale.style.setProperty('--whale-delay', delay.toFixed(1) + 's');
+      whale.style.setProperty('--whale-top', top.toFixed(1) + '%');
+      whale.style.setProperty('--whale-color', color);
+      whale.style.setProperty('--whale-opacity', (0.2 + Math.random() * 0.12).toFixed(2));
+
+      const body = document.createElement('span');
+      body.className = 'whale-body';
+      body.style.setProperty('--bob-delay', (-Math.random() * 4).toFixed(2) + 's');
+      body.innerHTML = WHALE_SVG;
+      whale.appendChild(body);
+
+      container.appendChild(whale);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 3d. STARFISH
+  //    A few small, mostly-static shapes near the ocean floor
+  //    and around the tree's base.
+  // ---------------------------------------------------------
+  function spawnStarfish(container, count) {
+    if (!container) return;
+    for (let i = 0; i < count; i++) {
+      const star = document.createElement('div');
+      star.className = 'starfish';
+      // Only a third of them get the subtle twinkle animation —
+      // most stay still, per the performance guidance.
+      if (Math.random() < 0.35) star.classList.add('twinkle');
+
+      const size = 16 + Math.random() * 20;
+      const left = 3 + (i / count) * 92 + (Math.random() * 8 - 4);
+      const bottom = 1 + Math.random() * 8;
+      const rot = (Math.random() - 0.5) * 50;
+      const color = STARFISH_COLORS[Math.floor(Math.random() * STARFISH_COLORS.length)];
+
+      star.style.setProperty('--starfish-size', size.toFixed(0) + 'px');
+      star.style.left = left.toFixed(1) + '%';
+      star.style.setProperty('--starfish-bottom', bottom.toFixed(1) + '%');
+      star.style.setProperty('--starfish-rot', rot.toFixed(0) + 'deg');
+      star.style.setProperty('--starfish-color', color);
+      star.style.setProperty('--starfish-opacity', (0.4 + Math.random() * 0.25).toFixed(2));
+      if (star.classList.contains('twinkle')) {
+        star.style.setProperty('--twinkle-duration', (5 + Math.random() * 3).toFixed(1) + 's');
+        star.style.setProperty('--twinkle-delay', (-Math.random() * 6).toFixed(1) + 's');
+      }
+
+      star.innerHTML = STARFISH_SVG;
+      container.appendChild(star);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 4. TREE DEFINITION
+  //    The trunk rises to the heart curve's own bottom cusp.
+  //    From there, two main limbs trace the LEFT and RIGHT
+  //    halves of the heart outline (so the silhouette is
+  //    literally drawn by the branches growing), then a fan of
+  //    secondary branches grows inward to fill and support the
+  //    canopy, each carrying a cluster of heart-shaped leaves.
+  // ---------------------------------------------------------
+  const TRUNK_D = 'M210,498 C204,440 216,392 208,340 C202,304 212,272 210,258';
+
+  function sampleHeartRange(tStart, tEnd, count, jitter) {
+    const pts = [];
+    for (let i = 0; i < count; i++) {
+      const t = tStart + (tEnd - tStart) * (i / (count - 1));
+      pts.push(heartPoint(t, 1, jitter));
+    }
+    return pts;
+  }
+
+  // The two main limbs: from the cusp (t = PI), sweeping up
+  // through the right lobe to the top cleft, and up through the
+  // left lobe to the same cleft, mirrored.
+  const HEART_OUTLINE_BRANCHES = [
+    { d: smoothPathD(sampleHeartRange(Math.PI, 0.06, 15, 3.5)), width: 6, leaves: Math.round(20 * PERF_SCALE) },
+    { d: smoothPathD(sampleHeartRange(Math.PI, Math.PI * 2 - 0.06, 15, 3.5)), width: 6, leaves: Math.round(20 * PERF_SCALE) },
+  ];
+
+  // Secondary "filler" branches: shorter, thinner limbs that
+  // branch from near the trunk tip inward across the heart,
+  // giving the canopy real structure to bloom from.
+  const SECONDARY_BRANCH_COUNT = 14;
+  const SECONDARY_LEAVES_PER_BRANCH = Math.round(8 * PERF_SCALE);
+  function buildSecondaryBranches() {
+    const branches = [];
+    for (let i = 0; i < SECONDARY_BRANCH_COUNT; i++) {
+      const start = {
+        x: HEART_ORIGIN.x + (Math.random() - 0.5) * 26,
+        y: HEART_ORIGIN.y - Math.random() * 30,
+      };
+      const target = heartFillPoint(0.32, 0.92).pt;
+      const mx = (start.x + target.x) / 2 + (Math.random() - 0.5) * 46;
+      const my = (start.y + target.y) / 2 - Math.random() * 30;
+      const d = 'M' + start.x.toFixed(1) + ',' + start.y.toFixed(1) +
+        ' Q' + mx.toFixed(1) + ',' + my.toFixed(1) + ' ' + target.x.toFixed(1) + ',' + target.y.toFixed(1);
+      branches.push({ d: d, width: 2.2 + Math.random() * 1.8, leaves: SECONDARY_LEAVES_PER_BRANCH });
+    }
+    return branches;
+  }
+
+  // Loose ambient leaves scattered freely through the canopy
+  // interior (not tied to any single branch) so the heart fills
+  // out to a dense, hundreds-strong bloom rather than reading as
+  // a handful of decorated twigs.
+  // Main canopy fill: an area-uniform spread across the whole heart
+  // interior — this alone covers the rounded lobe tops as densely
+  // as everywhere else, since it no longer relies on the cusp-radial
+  // approximation.
+  const LOOSE_LEAF_COUNT = Math.round(210 * PERF_SCALE);
+  // A second, smaller pass pulled toward the centroid, so the core
+  // around the trunk tip — where the reference photo is thickest —
+  // reads as solidly packed rather than merely "as dense as the rest".
+  const INNER_FILL_LEAF_COUNT = Math.round(65 * PERF_SCALE);
+
+  function makePath(d, strokeWidth, strokeUrl) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', 'branch-path');
+    path.setAttribute('stroke-width', strokeWidth);
+    if (strokeUrl) path.setAttribute('stroke', strokeUrl);
+    branchLayer.appendChild(path);
+    return path;
+  }
+
+  // Animates a path being "drawn" from start to end using the
+  // classic stroke-dasharray / stroke-dashoffset technique, so
+  // the branch genuinely extends rather than just fading in.
+  function growPath(path, durationMs) {
+    const length = path.getTotalLength();
+    path.style.strokeDasharray = length;
+    path.style.strokeDashoffset = length;
+    // force reflow so the browser registers the starting offset
+    // before we transition to 0
+    path.getBoundingClientRect();
+    path.style.transition = 'stroke-dashoffset ' + durationMs + 'ms ease-out';
+    requestAnimationFrame(() => {
+      path.style.strokeDashoffset = '0';
+    });
+  }
+
+  // Creates one small heart-shaped leaf/flower at a given point,
+  // with size, rotation, sway and a soft depth cue (some leaves
+  // sit slightly nearer the viewer, some slightly farther back),
+  // then reveals it after `delayMs`.
+  //
+  // IMPORTANT structural note: placement (translate/scale/rotate to
+  // x,y) lives on an outer <g>, set once as a plain SVG attribute.
+  // The sway/pulse animation lives on the inner <path> and is driven
+  // purely by CSS. These must NOT be the same element: a CSS
+  // "transform" (even one only set via a keyframe animation) always
+  // wins over an element's own "transform" *attribute*, replacing it
+  // entirely rather than combining with it. Putting both on one node
+  // silently discarded every leaf's x/y placement and collapsed
+  // ~230 leaves on top of one another at the same spot — which is
+  // exactly why the canopy used to look like bare branches with only
+  // a stray heart or two visible. Two elements, two separate
+  // transform channels, fixes it for good.
+  //
+  // PERFORMANCE note: only SWAY_FRACTION of leaves get the infinite
+  // sway animation; the rest fade in once and then hold still. With
+  // several hundred leaves, animating every single one continuously
+  // is the main thing that made the canopy feel laggy — a partial,
+  // randomly-chosen subset still reads as a softly-moving canopy
+  // (motion draws the eye more than count does) at a fraction of the
+  // ongoing cost, and it's a different random subset each reload.
+  const SWAY_FRACTION = 0.35;
+  function placeHeartLeaf(x, y, delayMs) {
+    const size = 0.55 + Math.random() * 0.7;
+    const rotation = (Math.random() - 0.5) * 60;
+    const isFar = Math.random() < 0.3;
+    const finalSize = isFar ? size * 0.8 : size;
+    const willSway = Math.random() < SWAY_FRACTION;
+
+    const slot = document.createElementNS(SVG_NS, 'g');
+    slot.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + finalSize.toFixed(2) + ')');
+
+    const leaf = document.createElementNS(SVG_NS, 'path');
+    leaf.setAttribute('d', HEART_D);
+    leaf.setAttribute('class', 'heart-leaf');
+    leaf.setAttribute('fill', randomLeafColor());
+    if (willSway) {
+      leaf.style.setProperty('--base-rot', rotation.toFixed(1) + 'deg');
+      leaf.style.setProperty('--sway-duration', (3.2 + Math.random() * 2.4).toFixed(2) + 's');
+      leaf.style.setProperty('--sway-delay', (Math.random() * 2).toFixed(2) + 's');
+    } else if (rotation) {
+      // Leaves that don't get the sway animation still keep their
+      // own random rotation, just as a one-time static transform on
+      // the (unanimated) path itself — no ongoing cost.
+      leaf.setAttribute('transform', 'rotate(' + rotation.toFixed(1) + ')');
+    }
+    // Depth cue for "far" leaves comes from size + opacity only
+    // (already set above/below) rather than an extra per-leaf
+    // blur filter, which would be one of the most expensive things
+    // to run on hundreds of individually swaying elements.
+    slot.appendChild(leaf);
+    leafLayer.appendChild(slot);
+
+    setTimeout(() => {
+      leaf.classList.add('shown');
+      if (willSway) leaf.classList.add('sway');
+      leaf.style.opacity = isFar ? '0.72' : '0.95';
+    }, delayMs);
+  }
+
+  // Scatters heart leaves along an already-drawn branch path.
+  function growLeavesOnBranch(path, count, baseDelayMs) {
+    const length = path.getTotalLength();
+    for (let i = 0; i < count; i++) {
+      // spread leaves along the outer half of the branch, where
+      // real leaf growth concentrates, with a little randomness
+      const t = 0.4 + (i / Math.max(count - 1, 1)) * 0.6 + (Math.random() * 0.06 - 0.03);
+      const point = path.getPointAtLength(Math.min(Math.max(t, 0), 1) * length);
+      const jitterX = (Math.random() - 0.5) * 22;
+      const jitterY = (Math.random() - 0.5) * 16;
+      const delay = baseDelayMs + i * TIMING.LEAF_STAGGER_MS + Math.random() * TIMING.LEAF_STAGGER_MS * 0.6;
+      placeHeartLeaf(point.x + jitterX, point.y + jitterY, delay);
+    }
+  }
+
+  // Scatters loose, branch-free leaves through the whole canopy
+  // interior, blooming outward from the trunk tip so the heart
+  // fills in like hundreds of tiny flowers opening over time.
+  // Points are drawn area-uniformly from the true heart interior
+  // (see heartUniformPoint) so density stays even across the whole
+  // canopy, including the rounded lobe tops — pullToCenter (0-1)
+  // optionally weights a pass toward the core instead of a flat
+  // spread. Stagger timing uses distance-from-trunk as a rough
+  // "outward bloom" ordering only, not as a coverage bias.
+  const HEART_DIAG = Math.hypot(HEART_BOUNDS.maxX - HEART_BOUNDS.minX, HEART_BOUNDS.maxY - HEART_BOUNDS.minY);
+  function growLooseCanopyLeaves(count, baseDelayMs, spreadMs, pullToCenter) {
+    let maxDelay = 0;
+    for (let i = 0; i < count; i++) {
+      const pt = heartUniformPoint(pullToCenter);
+      const distU = Math.min(1, Math.hypot(pt.x - HEART_ORIGIN.x, pt.y - HEART_ORIGIN.y) / HEART_DIAG);
+      const delay = baseDelayMs + distU * spreadMs + Math.random() * (spreadMs * 0.35);
+      maxDelay = Math.max(maxDelay, delay);
+      placeHeartLeaf(pt.x, pt.y, delay);
+    }
+    return maxDelay;
+  }
+
+  // A small handful of hearts that bud in right at the very start
+  // of growth, clustered near the trunk's eventual tip — so the
+  // sapling is never bare while the trunk is still rising. These
+  // land before the branches even exist, and the branch/loose-leaf
+  // stages below simply pick up and continue the bloom from here.
+  function growSeedBuds(count) {
+    for (let i = 0; i < count; i++) {
+      const fill = heartFillPoint(0.02, 0.22);
+      const delay = 260 + i * 110 + Math.random() * 160;
+      placeHeartLeaf(fill.pt.x, fill.pt.y, delay);
+    }
+  }
+
+  // Grows the whole tree, stage by stage — trunk, then the two
+  // main limbs tracing the heart's own outline, then a fan of
+  // secondary branches with their own leaf clusters, then a wave
+  // of loose leaves filling the remaining canopy — and resolves
+  // once every branch and leaf has appeared.
+  function growTree() {
+    return new Promise((resolve) => {
+      const trunk = makePath(TRUNK_D, 15);
+      growPath(trunk, TIMING.TRUNK_GROW_MS);
+      growSeedBuds(TIMING.SEED_BUD_COUNT);
+
+      setTimeout(() => {
+        // Stage A — the heart silhouette itself, drawn by the
+        // two main limbs growing up and outward together.
+        HEART_OUTLINE_BRANCHES.forEach((branchDef) => {
+          const branchPath = makePath(branchDef.d, branchDef.width, 'url(#canopyBarkGradient)');
+          growPath(branchPath, TIMING.HEART_OUTLINE_GROW_MS);
+          setTimeout(() => {
+            growLeavesOnBranch(branchPath, branchDef.leaves, 0);
+          }, TIMING.HEART_OUTLINE_GROW_MS * 0.6);
+        });
+
+        const secondaryStart = TIMING.HEART_OUTLINE_GROW_MS * 0.68;
+        setTimeout(() => {
+          // Stage B — secondary branches fan inward, each quickly
+          // followed by its own small cluster of leaves.
+          const secondaryBranches = buildSecondaryBranches();
+          let secondaryMaxFinish = 0;
+          secondaryBranches.forEach((branchDef, index) => {
+            const startDelay = index * TIMING.SECONDARY_BRANCH_STAGGER_MS;
+            const finishTime = startDelay + TIMING.SECONDARY_BRANCH_GROW_MS;
+            secondaryMaxFinish = Math.max(secondaryMaxFinish, finishTime + branchDef.leaves * TIMING.LEAF_STAGGER_MS + TIMING.LEAF_FADE_MS);
+
+            setTimeout(() => {
+              const branchPath = makePath(branchDef.d, branchDef.width, 'url(#canopyBarkGradient)');
+              growPath(branchPath, TIMING.SECONDARY_BRANCH_GROW_MS);
+              setTimeout(() => {
+                growLeavesOnBranch(branchPath, branchDef.leaves, 0);
+              }, TIMING.SECONDARY_BRANCH_GROW_MS * 0.65);
+            }, startDelay);
+          });
+
+          // Stage C — loose ambient leaves bloom throughout the
+          // canopy, overlapping with the tail end of stage B, so
+          // the whole heart fills in as one continuous bloom. Two
+          // passes: one rim-favoring (matches the branch structure
+          // underneath) and one interior-biased, so the middle of
+          // the heart ends up just as densely covered as its edge —
+          // a "full" heart, not a hollow outline with a fringe.
+          const looseStart = TIMING.SECONDARY_BRANCH_STAGGER_MS * 4;
+          const looseMaxDelay = growLooseCanopyLeaves(LOOSE_LEAF_COUNT, looseStart, TIMING.LOOSE_LEAF_SPREAD_MS, 0);
+          const innerMaxDelay = growLooseCanopyLeaves(INNER_FILL_LEAF_COUNT, looseStart, TIMING.LOOSE_LEAF_SPREAD_MS, 0.35);
+
+          const stageBFinish = Math.max(secondaryMaxFinish, looseStart + Math.max(looseMaxDelay, innerMaxDelay) + TIMING.LEAF_FADE_MS);
+          setTimeout(resolve, stageBFinish);
+        }, secondaryStart);
+      }, TIMING.TRUNK_GROW_MS * 0.85);
+    });
+  }
+
+  // ---------------------------------------------------------
+  // 5. FALLING HEART LEAVES
+  //    Spawned continuously (at a gentle pace, capped in number)
+  //    once the tree has fully grown.
+  // ---------------------------------------------------------
+  function spawnFallingHeart() {
+    if (fallingHeartCount >= TIMING.FALLING_HEART_MAX_ON_SCREEN) return;
+    fallingHeartCount++;
+
+    const heart = document.createElement('div');
+    heart.className = 'falling-heart';
+
+    const size = 12 + Math.random() * 14;
+    const duration = TIMING.FALLING_HEART_MIN_DURATION_S + Math.random() * (TIMING.FALLING_HEART_MAX_DURATION_S - TIMING.FALLING_HEART_MIN_DURATION_S);
+    const driftX = (Math.random() - 0.5) * 160;
+    const rotMid = (Math.random() - 0.5) * 200;
+    const rotEnd = rotMid + (Math.random() - 0.5) * 200;
+
+    heart.style.left = (Math.random() * 92 + 4).toFixed(1) + '%';
+    heart.style.width = size.toFixed(0) + 'px';
+    heart.style.height = size.toFixed(0) + 'px';
+    heart.style.color = randomLeafColor();
+    heart.style.setProperty('--fall-duration', duration.toFixed(2) + 's');
+    heart.style.setProperty('--drift-x', driftX.toFixed(0) + 'px');
+    heart.style.setProperty('--rot-mid', rotMid.toFixed(0) + 'deg');
+    heart.style.setProperty('--rot-end', rotEnd.toFixed(0) + 'deg');
+
+    heart.innerHTML = '<svg viewBox="-11 -3 22 26" xmlns="' + SVG_NS + '"><path d="' + HEART_D + '" fill="currentColor"/></svg>';
+    fallingHeartsContainer.appendChild(heart);
+
+    setTimeout(() => {
+      heart.remove();
+      fallingHeartCount--;
+    }, duration * 1000 + 100);
+  }
+
+  function startFallingHearts() {
+    spawnFallingHeart();
+    fallingHeartTimer = setInterval(spawnFallingHeart, TIMING.FALLING_HEART_INTERVAL_MS);
+  }
+
+  // ---------------------------------------------------------
+  // 6. LOVE LETTER TYPING ANIMATION
+  // ---------------------------------------------------------
+  function typeLetter() {
+    const fullText = letterTextEl.textContent.trim();
+    letterTextEl.textContent = '';
+
+    let index = 0;
+    function typeNextChar() {
+      if (index < fullText.length) {
+        letterTextEl.textContent += fullText.charAt(index);
+        index++;
+        // Keep the cursor in view inside the scrollable body as
+        // the letter grows past the visible area, instead of
+        // letting the card itself grow.
+        if (letterBodyEl) {
+          letterBodyEl.scrollTop = letterBodyEl.scrollHeight;
+        }
+        const speed = TIMING.TYPING_SPEED_MIN_MS + Math.random() * (TIMING.TYPING_SPEED_MAX_MS - TIMING.TYPING_SPEED_MIN_MS);
+        setTimeout(typeNextChar, speed);
+      } else {
+        letterCursorEl.classList.add('done');
+        // Typing is fully finished -- this is the ONLY trigger
+        // for revealing the "Click Here!" button.
+        showRevealButton();
+      }
+    }
+    typeNextChar();
+  }
+
+  // ---------------------------------------------------------
+  // 7. MOVE TREE + REVEAL LETTER
+  // ---------------------------------------------------------
+  function moveTreeAndRevealLetter() {
+    // Hint the compositor only for the duration of this one-time
+    // repositioning transition, then drop the hint again — see
+    // the .moving rule in the stylesheet.
+    treeStage.classList.add('moving');
+    letterStage.classList.add('moving');
+    const stopHinting = () => {
+      treeStage.classList.remove('moving');
+      letterStage.classList.remove('moving');
+    };
+    setTimeout(stopHinting, TIMING.TREE_MOVE_MS + 200);
+
+    scene.classList.add('tree-final');
+
+    setTimeout(() => {
+      letterStage.classList.add('visible');
+      setTimeout(typeLetter, TIMING.TYPING_START_DELAY_MS);
+    }, TIMING.LETTER_DELAY_AFTER_MOVE_MS);
+  }
+
+  // ---------------------------------------------------------
+  // 7b. "CLICK HERE!" BUTTON
+  // ---------------------------------------------------------
+  // The ONLY place this is called from is the very end of
+  // typeLetter(), once every character has been typed.
+  function showRevealButton() {
+    if (!revealBtn) return;
+    revealBtn.classList.add('visible');
+  }
+
+  // ---------------------------------------------------------
+  // 7c. TRANSITION: LETTER + TREE FADE AWAY -> GALLERY APPEARS
+  // ---------------------------------------------------------
+  function handleRevealClick() {
+    // Prevent double-clicks from restarting the transition.
+    revealBtn.classList.remove('visible');
+    revealBtn.disabled = true;
+
+    // Slowly fade/move the love letter and the tree away —
+    // both animate at once, nothing disappears instantly.
+    letterStage.classList.add('fading-out');
+    treeStage.classList.add('fading-out');
+
+    // Wait for that cinematic fade to fully finish before the
+    // gallery section appears.
+    setTimeout(() => {
+      revealGallery();
+    }, TIMING.SCENE_FADE_OUT_MS);
+  }
+
+  // ---------------------------------------------------------
+  // 7d. PHOTO GALLERY REVEAL
+  // ---------------------------------------------------------
+  function revealGallery() {
+    if (!gallerySection) return;
+
+    gallerySection.setAttribute('aria-hidden', 'false');
+    gallerySection.classList.add('visible');
+
+    // Stagger each gallery item's (and the music player's)
+    // entrance with a small progressive delay so they animate
+    // in one by one, not all at once.
+    const items = galleryGrid
+      ? Array.from(galleryGrid.querySelectorAll('.gallery-item, .music-player'))
+      : [];
+    items.forEach((item, i) => {
+      item.style.setProperty('--reveal-delay', (i * TIMING.GALLERY_ITEM_STAGGER_MS) + 'ms');
+    });
+
+    // Force a reflow, then add .revealed on the next frame so
+    // the opacity/display transition actually runs instead of
+    // snapping straight to visible.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        gallerySection.classList.add('revealed');
+      });
+    });
+
+    initMusicPlayer();
+  }
+
+  // ---------------------------------------------------------
+  // 7e. MUSIC PLAYER
+  // ---------------------------------------------------------
+  let musicPlayerReady = false;
+  function initMusicPlayer() {
+    if (musicPlayerReady) return;
+    musicPlayerReady = true;
+    if (!musicAudio || !musicPlayBtn) return;
+
+    // Apply the song title / audio file from the settings at
+    // the top of this script (see "MUSIC PLAYER SETTINGS").
+    if (musicTitleEl) musicTitleEl.textContent = SONG_TITLE;
+    musicAudio.src = AUDIO_FILE;
+
+    function setPlayingUI(isPlaying) {
+      musicPlayIcon.style.display = isPlaying ? 'none' : '';
+      musicPauseIcon.style.display = isPlaying ? '' : 'none';
+      musicPlayBtn.setAttribute('aria-label', isPlaying ? 'Pause song' : 'Play song');
+    }
+
+    musicPlayBtn.addEventListener('click', () => {
+      if (musicAudio.paused) {
+        musicAudio.play().catch(() => {
+          // Autoplay/decoding restrictions or a missing file —
+          // fail quietly, the UI simply stays on "play".
+        });
+      } else {
+        musicAudio.pause();
+      }
+    });
+
+    musicAudio.addEventListener('play', () => setPlayingUI(true));
+    musicAudio.addEventListener('pause', () => setPlayingUI(false));
+    musicAudio.addEventListener('ended', () => setPlayingUI(false));
+
+    musicAudio.addEventListener('timeupdate', () => {
+      if (!musicAudio.duration) return;
+      const pct = (musicAudio.currentTime / musicAudio.duration) * 100;
+      musicProgressFill.style.width = pct + '%';
+    });
+
+    if (musicProgressTrack) {
+      musicProgressTrack.addEventListener('click', (e) => {
+        if (!musicAudio.duration) return;
+        const rect = musicProgressTrack.getBoundingClientRect();
+        const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+        musicAudio.currentTime = ratio * musicAudio.duration;
+      });
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 8. MASTER SEQUENCE
+  // ---------------------------------------------------------
+  function startSequence() {
+    growTree().then(() => {
+      treeStage.classList.add('grown');
+      startFallingHearts();
+      setTimeout(moveTreeAndRevealLetter, TIMING.PAUSE_AFTER_GROWN_MS);
+    });
+  }
+
+  // ---------------------------------------------------------
+  // 9. ENTRY POINT
+  // ---------------------------------------------------------
+  particleContainers.forEach((container) => {
+    const base = container && container.id === 'particles' ? 26 : 16;
+    spawnParticles(container, Math.max(12, Math.round(base * PERF_SCALE)));
+  });
+
+  spawnFish(fishContainers[1], TIMING.FISH_MAIN_COUNT, { minSize: 22, maxSize: 46, minDuration: 16, maxDuration: 32 });
+  spawnFish(fishContainers[0], TIMING.FISH_WELCOME_COUNT, { minSize: 14, maxSize: 26, minDuration: 24, maxDuration: 40, opacity: 0.32 });
+
+  spawnWhales(whaleLayer, TIMING.WHALE_COUNT);
+  spawnStarfish(starfishLayer, TIMING.STARFISH_COUNT);
+
+  openBtn.addEventListener('click', () => {
+    welcomeScreen.classList.add('hidden');
+    scene.classList.add('active');
+    scene.setAttribute('aria-hidden', 'false');
+    startSequence();
+  }, { once: true });
+
+  if (revealBtn) {
+    revealBtn.addEventListener('click', handleRevealClick, { once: true });
+  }
+
+})();
+
+</script>
+</body>
+</html>
