@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>My dearest babi</title>
 
 <!-- Two deliberate type families: a serif for the letter/headline voice, a soft rounded sans for UI moments -->
@@ -56,6 +56,13 @@
   --tree-scale: 1;
   --letter-x: 20%;
   --letter-y: 50%;
+
+  /* --- device safe areas (notches / home indicators), with a
+     fallback of 0px on devices that don't report them --- */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
 }
 
 * { box-sizing: border-box; }
@@ -148,6 +155,11 @@ button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   gap: 2.4rem;
+  text-align: center;
+  /* Keep content clear of notches/rounded corners on any device,
+     and off the very edge on narrow phones. */
+  padding: max(24px, var(--safe-top)) max(20px, var(--safe-right))
+           max(24px, var(--safe-bottom)) max(20px, var(--safe-left));
   transition: opacity 1.1s ease, visibility 1.1s ease;
 }
 
@@ -175,6 +187,7 @@ button { font-family: inherit; }
 .welcome-eyebrow {
   position: relative;
   margin: 0;
+  max-width: min(90vw, 520px);
   font-family: var(--font-display);
   font-style: italic;
   font-size: clamp(1.1rem, 2.4vw, 1.5rem);
@@ -758,7 +771,7 @@ button { font-family: inherit; }
 .reveal-btn {
   position: fixed;
   left: 50%;
-  bottom: 6vh;
+  bottom: calc(6vh + var(--safe-bottom));
   transform: translate(-50%, 18px);
   z-index: 40;
   border: 1px solid rgba(253, 246, 238, 0.55);
@@ -830,7 +843,10 @@ button { font-family: inherit; }
   pointer-events: none;
   transition: opacity 1.6s ease;
   display: none;
-  padding: clamp(24px, 6vh, 64px) clamp(16px, 5vw, 56px) 64px;
+  padding: max(clamp(24px, 6vh, 64px), var(--safe-top))
+           max(clamp(16px, 5vw, 56px), var(--safe-right))
+           calc(64px + var(--safe-bottom))
+           max(clamp(16px, 5vw, 56px), var(--safe-left));
 }
 
 .gallery-section.visible {
@@ -966,12 +982,71 @@ button { font-family: inherit; }
   transition: width 0.15s linear;
 }
 
+/* ------------------------------------------------------------
+   Gallery grid tiers by screen width — 5 columns on desktop,
+   stepping down to 4 / 3 / 2 as the viewport narrows, so photos
+   always stay a comfortable, tappable size on any device.
+   Explicit center-placement for the music player only makes
+   sense on the true 5-column desktop layout; on every narrower
+   tier it just falls in naturally wherever it sits in the HTML
+   (roughly the middle photo).
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  .gallery-grid { grid-template-columns: repeat(4, 1fr); }
+  .music-player { grid-column: auto; grid-row: auto; }
+}
+
 @media (max-width: 700px) {
   .gallery-grid { grid-template-columns: repeat(3, 1fr); }
-  /* Explicit centering only makes sense on the 5-col desktop
-     layout; on narrower grids let the player fall in naturally
-     wherever it sits in the HTML (roughly the middle photo). */
   .music-player { grid-column: auto; grid-row: auto; }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(8px, 3vw, 14px);
+  }
+  .gallery-heading {
+    font-size: clamp(1.15rem, 5.5vw, 1.5rem);
+    margin-bottom: 18px;
+  }
+  .music-player { padding: 12px 10px; }
+}
+
+/* ------------------------------------------------------------
+   Short viewports (landscape phones / small foldables): the
+   tree + letter + button all need to shrink and tuck closer
+   together so nothing gets cut off or overlaps.
+   ------------------------------------------------------------ */
+@media (max-height: 480px) {
+  .tree-stage { width: min(42vw, 240px); }
+  .letter-stage { width: min(60vw, 340px); }
+  .letter-card {
+    height: 170px;
+    max-height: 78vh;
+    padding: 1rem 1.1rem 0.9rem;
+  }
+  .letter-heading { font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .letter-text { font-size: 0.9rem; line-height: 1.45; }
+  .welcome-eyebrow { font-size: 1rem; }
+  .open-btn, .reveal-btn {
+    padding: 0.6em 1.6em;
+    font-size: 0.9rem;
+  }
+  .reveal-btn { bottom: calc(3vh + var(--safe-bottom)); }
+  .gallery-heading { font-size: 1.2rem; margin-bottom: 14px; }
+}
+
+/* ------------------------------------------------------------
+   Very large / ultra-wide displays: let the composition breathe
+   a little more without the tree and letter drifting too far
+   apart from each other.
+   ------------------------------------------------------------ */
+@media (min-width: 1600px) {
+  .scene {
+    --tree-x-final: 66%;
+    --letter-x-final: 27%;
+  }
 }
 
 </style>
